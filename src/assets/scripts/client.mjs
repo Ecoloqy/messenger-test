@@ -135,7 +135,7 @@ const createVideoPeer = (callToUserUUID) => {
     connectedUsers.push(user);
   }
 
-  if (localVideoStream && !user.videoConnection) {
+  if (localVideoStream) {
     user.videoConnection = new RTCPeerConnection(configuration);
 
     user.videoConnection.addStream(localVideoStream);
@@ -143,6 +143,10 @@ const createVideoPeer = (callToUserUUID) => {
     user.videoConnection.onaddstream = (event) => {
       user.srcObject = event.stream;
     };
+
+    user.videoConnection.onconnectionstatechange = (state) => {
+      console.log(state.target);
+    }
 
     user.videoConnection.onicecandidate = (event) => {
       if (event.candidate) {
@@ -186,7 +190,9 @@ const getUserStream = (params, otherUsersToCall) => {
     const allConnectedUsers = connectedUsers.map((cu) => cu.uuid);
     const usersToCall = otherUsersToCall.filter((user) => allConnectedUsers.includes(user));
     usersToCall.forEach((callToUserUUID) => {
-      callTo(callToUserUUID);
+      setTimeout(() => {
+        callTo(callToUserUUID);
+      }, 1000);
     });
   })
 }
@@ -196,7 +202,7 @@ const handleUserDisconnect = (success, callToUserUUID) => {
 }
 
 const handleUserConnect = (success, callToUserUUID) => {
-  createVideoPeer(callToUserUUID);
+  // createVideoPeer(callToUserUUID);
   // callTo(callToUserUUID);
 }
 
@@ -222,7 +228,7 @@ const callTo = (callToUserUUID) => {
 }
 
 const handleOfferVideo = (offer, callToUserUUID) => {
-  // createVideoPeer(callToUserUUID);
+  createVideoPeer(callToUserUUID);
 
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
   if (!!user?.videoConnection) {
@@ -251,7 +257,7 @@ const handleAnswerVideo = (answer, callToUserUUID) => {
 
 const handleCandidateVideo = (candidate, callToUserUUID) => {
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
-  if (candidate && user?.videoConnection) {
+  if (user?.videoConnection) {
     user.videoConnection.addIceCandidate(new RTCIceCandidate(candidate));
   }
 };

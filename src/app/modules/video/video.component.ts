@@ -20,9 +20,9 @@ export class VideoComponent implements OnInit {
     script.setUserUUID(this.userUUID);
     script.setIceServers([
       {
-        urls: 'turn:ts1-ewizyty-dev.klg.dms.pl',
-        credential: this.appConfigService.appConfig.iceCredential,
-        username: this.appConfigService.appConfig.iceUsername,
+        urls: 'turn:turn.bistri.com:80',
+        credential: 'homeo',
+        username: 'homeo',
       },
     ]);
     script.setConnection('ws://51.77.58.218:8090');

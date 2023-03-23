@@ -20,9 +20,22 @@ export class VideoComponent implements OnInit {
     script.setUserUUID(this.userUUID);
     script.setIceServers([
       {
-        urls: 'turn:turn.bistri.com:80',
-        credential: 'homeo',
-        username: 'homeo',
+        urls: 'stun:relay.metered.ca:80',
+      },
+      {
+        urls: 'turn:relay.metered.ca:80',
+        username: 'df36a504987e1cfd985e6a30',
+        credential: '0ga+k5C5f7DLK/ED',
+      },
+      {
+        urls: 'turn:relay.metered.ca:443',
+        username: 'df36a504987e1cfd985e6a30',
+        credential: '0ga+k5C5f7DLK/ED',
+      },
+      {
+        urls: 'turn:relay.metered.ca:443?transport=tcp',
+        username: 'df36a504987e1cfd985e6a30',
+        credential: '0ga+k5C5f7DLK/ED',
       },
     ]);
     script.setConnection('ws://51.77.58.218:8090');

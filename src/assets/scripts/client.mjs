@@ -98,8 +98,6 @@ const send = (message) => {
   connection.send(JSON.stringify(message));
 };
 
-let videoConnection;
-
 window.addEventListener('beforeunload', function (e) {
   send({
     type: "userDisconnect",
@@ -137,7 +135,7 @@ const createVideoPeer = (callToUserUUID) => {
     connectedUsers.push(user);
   }
 
-  if (localVideoStream) {
+  if (localVideoStream && !user.videoConnection) {
     user.videoConnection = new RTCPeerConnection(configuration);
 
     user.videoConnection.addStream(localVideoStream);
@@ -147,13 +145,17 @@ const createVideoPeer = (callToUserUUID) => {
     };
 
     user.videoConnection.onicecandidate = (event) => {
-      send({
-        type: "candidateVideo",
-        userUUID: userUUID,
-        callUserUUID: user.uuid,
-        candidate: event.candidate,
-        roomUUID: roomUUID
-      })
+      if (event.candidate) {
+        setTimeout(() => {
+          send({
+            type: "candidateVideo",
+            userUUID: userUUID,
+            callUserUUID: user.uuid,
+            candidate: event.candidate,
+            roomUUID: roomUUID
+          });
+        }, 1000);
+      }
     };
   }
 }
@@ -185,53 +187,64 @@ const getUserStream = (params, otherUsersToCall) => {
 
     const allConnectedUsers = connectedUsers.map((cu) => cu.uuid);
     const usersToCall = otherUsersToCall.filter((user) => allConnectedUsers.includes(user));
-    usersToCall.forEach((userToCall) => {
-      callTo(userToCall);
+    usersToCall.forEach((callToUserUUID) => {
+      callTo(callToUserUUID);
     });
   })
 }
 
-const handleUserDisconnect = (success, userUUID) => {
-  connectedUsers = connectedUsers.filter((cu) => cu.uuid !== userUUID);
+const handleUserDisconnect = (success, callToUserUUID) => {
+  connectedUsers = connectedUsers.filter((cu) => cu.uuid !== callToUserUUID);
 }
 
-const handleUserConnect = (success, userUUID) => {
-  callTo(userUUID);
+const handleUserConnect = (success, callToUserUUID) => {
+  // callTo(callToUserUUID);
 }
 
 const callTo = (callToUserUUID) => {
   createVideoPeer(callToUserUUID);
 
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
-  user.videoConnection.createOffer().then((offer) => {
-    send({
-      type: "offerVideo",
-      offer: offer,
-      callUserUUID: callToUserUUID,
-      userUUID: userUUID,
-      roomUUID: roomUUID
+  if (user?.videoConnection) {
+    user.videoConnection.createOffer().then((offer) => {
+      user.videoConnection.setLocalDescription(offer).then((r) => {
+        setTimeout(() => {
+          console.log('offerVideo');
+          send({
+            type: "offerVideo",
+            offer: offer,
+            callUserUUID: callToUserUUID,
+            userUUID: userUUID,
+            roomUUID: roomUUID
+          });
+        }, 1000);
+      })
+    }).catch(() => {
+      alert("Error when creating an offer");
     });
-    user.videoConnection.setLocalDescription(offer);
-  }).catch(() => {
-    alert("Error when creating an offer");
-  });
+  }
 }
 
 const handleOfferVideo = (offer, callToUserUUID) => {
   createVideoPeer(callToUserUUID);
 
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
-  if (user?.videoConnection) {
-    user.videoConnection.setRemoteDescription(new RTCSessionDescription(offer)).then((r) => {
+  if (!!user?.videoConnection) {
+    console.log('handleOfferVideo');
+    user.videoConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
       user.videoConnection.createAnswer().then((answer) => {
-        send({
-          type: "answerVideo",
-          answer: answer,
-          callUserUUID: callToUserUUID,
-          userUUID: userUUID,
-          roomUUID: roomUUID
-        });
-        user.videoConnection.setLocalDescription(answer);
+        user.videoConnection.setLocalDescription(answer).then(() => {
+          setTimeout(() => {
+            console.log('answerVideo');
+            send({
+              type: "answerVideo",
+              answer: answer,
+              callUserUUID: callToUserUUID,
+              userUUID: userUUID,
+              roomUUID: roomUUID
+            });
+          }, 1000);
+        })
       }).catch(() => {
         alert("Error when answering a video");
       });
@@ -241,19 +254,21 @@ const handleOfferVideo = (offer, callToUserUUID) => {
 
 const handleAnswerVideo = (answer, callToUserUUID) => {
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
-  user.videoConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  setTimeout(() => {
+    console.log('handleAnswerVideo');
+    user.videoConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  }, 1000);
 };
 
-const handleCandidateVideo = (candidate, userUUID) => {
-  const user = connectedUsers.find((cu) => cu.uuid === userUUID);
-  if (candidate && user?.videoConnection) {
-    user.videoConnection.addIceCandidate(new RTCIceCandidate(candidate));
-  }
+const handleCandidateVideo = (candidate, callToUserUUID) => {
+  const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
+  setTimeout(() => {
+    if (candidate && user?.videoConnection) {
+      user.videoConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  }, 1000);
 };
 
 const handleLeave = () => {
   connectedUsers = [];
-  videoConnection.close();
-  videoConnection.onicecandidate = null;
-  videoConnection.onaddstream = null;
 }

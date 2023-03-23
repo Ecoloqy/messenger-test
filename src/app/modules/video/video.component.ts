@@ -26,5 +26,6 @@ export class VideoComponent implements OnInit {
       },
     ]);
     script.setConnection('ws://51.77.58.218:8090');
+    // script.setConnection('ws://127.0.0.1:9090');
   }
 }

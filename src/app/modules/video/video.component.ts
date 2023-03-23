@@ -25,7 +25,6 @@ export class VideoComponent implements OnInit {
         username: this.appConfigService.appConfig.iceUsername,
       },
     ]);
-
-    script.setConnection('ws://127.0.0.1:9090');
+    script.setConnection('ws://51.77.58.218:8090');
   }
 }

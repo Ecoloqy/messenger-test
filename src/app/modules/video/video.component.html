@@ -1,0 +1,21 @@
+<script type="module" src="assets/scripts/client.mjs"></script>
+
+<div id="callPage" [style.display]="'flex'">
+  <div
+    [style.background-color]="'red'"
+    [style.display]="'flex'"
+    [style.flex-direction]="'column'"
+  >
+    <video id="local-video" autoplay playsinline></video>
+    {{ userUUID }}
+  </div>
+  <div
+    [style.background-color]="'blue'"
+    [style.display]="'flex'"
+    [style.flex-direction]="'column'"
+    *ngFor="let user of getUsersFn()"
+  >
+    <video [srcObject]="user.srcObject" autoplay playsinline></video>
+    {{ user.uuid }}
+  </div>
+</div>

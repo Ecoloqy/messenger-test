@@ -1,0 +1,33 @@
+#callPage {
+  background-color: #505050;
+  height: 100vh;
+
+#local-video-container {
+  position: fixed;
+  bottom: 5vh;
+  left: 5vw;
+  z-index: 99;
+  width: 15vw;
+  overflow: hidden;
+
+#localVideo {
+  z-index: 99;
+  width: 15vw;
+  object-fit: cover;
+}
+
+}
+
+#remote-video-container {
+  z-index: -1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+#remoteVideo, #remoteVideo2 {
+  z-index: 0;
+  height: 100vh;
+}
+}
+}

@@ -140,17 +140,6 @@ const createVideoPeer = (callToUserUUID) => {
 
     user.videoConnection.onconnectionstatechange = (state) => {
       console.log(state.target);
-      if (state.target.connectionState === 'disconnected') {
-        user.videoConnection.restartIce();
-        // connectedUsers = connectedUsers.filter((cu) => cu.uuid !== user.uuid);
-        // user.srcObject = null;
-        // handleUserDisconnect();
-        // send({
-        //   type: "userDisconnect",
-        //   roomUUID: roomUUID,
-        //   userUUID: user.uuid
-        // });
-      }
     }
 
     user.videoConnection.onicecandidate = (event) => {
@@ -211,7 +200,7 @@ const callTo = (callToUserUUID) => {
 
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
   if (user?.videoConnection) {
-    user.videoConnection.createOffer().then((offer) => {
+    user.videoConnection.createOffer({ iceRestart: true }).then((offer) => {
       user.videoConnection.setLocalDescription(offer).then((r) => {
         send({
           type: "offerVideo",

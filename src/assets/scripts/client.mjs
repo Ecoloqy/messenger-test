@@ -140,6 +140,16 @@ const createVideoPeer = (callToUserUUID) => {
 
     user.videoConnection.onconnectionstatechange = (state) => {
       console.log(state.target);
+      if (state.target.connectionState === 'disconnected') {
+        connectedUsers = connectedUsers.filter((cu) => cu.uuid !== user.uuid);
+        user.srcObject = null;
+        handleUserDisconnect();
+        send({
+          type: "userDisconnect",
+          roomUUID: roomUUID,
+          userUUID: user.uuid
+        });
+      }
     }
 
     user.videoConnection.onicecandidate = (event) => {

@@ -47,10 +47,6 @@ export const setConnection = (address) => {
         handleUserDisconnect(data.success, data.userUUID);
         break;
       }
-      case "userConnect": {
-        handleUserConnect(data.success, data.userUUID);
-        break;
-      }
       case "offerVideo": {
         handleOfferVideo(data.offer, data.userUUID);
         break;
@@ -69,10 +65,6 @@ export const setConnection = (address) => {
       }
       case "unMute": {
         handleMute(false, data.name);
-        break;
-      }
-      case "leave": {
-        handleLeave();
         break;
       }
       default:
@@ -98,7 +90,8 @@ const send = (message) => {
   connection.send(JSON.stringify(message));
 };
 
-window.addEventListener('beforeunload', function (e) {
+window.addEventListener('beforeunload', () => {
+  connectedUsers = [];
   send({
     type: "userDisconnect",
     roomUUID: roomUUID,
@@ -106,7 +99,8 @@ window.addEventListener('beforeunload', function (e) {
   });
 });
 
-window.addEventListener('close', function (e)  {
+window.addEventListener('close', () =>  {
+  connectedUsers = [];
   send({
     type: "userDisconnect",
     roomUUID: roomUUID,
@@ -201,11 +195,6 @@ const handleUserDisconnect = (success, callToUserUUID) => {
   connectedUsers = connectedUsers.filter((cu) => cu.uuid !== callToUserUUID);
 }
 
-const handleUserConnect = (success, callToUserUUID) => {
-  // createVideoPeer(callToUserUUID);
-  // callTo(callToUserUUID);
-}
-
 const callTo = (callToUserUUID) => {
   createVideoPeer(callToUserUUID);
 
@@ -261,7 +250,3 @@ const handleCandidateVideo = (candidate, callToUserUUID) => {
     user.videoConnection.addIceCandidate(new RTCIceCandidate(candidate));
   }
 };
-
-const handleLeave = () => {
-  connectedUsers = [];
-}

@@ -1,6 +1,8 @@
 /* eslint-env es6 */
 /* eslint-disable */
 
+import RecordRTC from '../scripts/RecordRTC.js';
+
 const getLocalVideoContainer = () => {
   return document.querySelector('#local-video');
 }
@@ -12,6 +14,11 @@ let roomUUID = null;
 let connectedUsers = [];
 let localVideoStream = null;
 let connection = null;
+
+const recordTimer = 5000;
+let mediaRecorder = null;
+let codec = null;
+let recording = false;
 
 export const setIceServers = (value) => {
   iceServers = value;
@@ -30,7 +37,9 @@ export const getConnectedUsers = () => {
 }
 
 export const setConnection = (address) => {
+  codec = getSupportedMimeTypes();
   connection = new WebSocket(address);
+  startRecording();
 
   connection.onopen = () => {
     send({ type: "login" });
@@ -95,6 +104,72 @@ const send = (message) => {
 
   connection.send(JSON.stringify(message));
 };
+
+const getSupportedMimeTypes = () => {
+  const possibleTypes = [
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=h264,opus',
+    'video/webm;codecs=vp9,opus',
+    'video/mp4;codecs=h264,aac',
+  ];
+  const codecs = possibleTypes.filter(mimeType => {
+    return MediaRecorder.isTypeSupported(mimeType);
+  });
+
+  if (codecs.length > 0) {
+    logValues('SUCCESS WebRTC', 'Codec found: ' + codecs[0]);
+    return codecs[0];
+  }
+
+  logValues('ERROR WebRTC', 'No codecs found');
+  return null;
+}
+
+const startRecording = () => {
+  if (recording) {
+    stopRecording();
+    return;
+  }
+
+  const remoteStreams = connectedUsers.map((user) => user.srcObject).filter((stream) => !!stream);
+  const allAudioStreams = remoteStreams.concat(localVideoStream);
+  logValues('SUCCESS WebRTC', 'Remote streams available: ' + remoteStreams.length + ', local stream: ' + (!!localVideoStream ? 'available' : 'not available'));
+  if (allAudioStreams.length > 1) {
+    logValues('SUCCESS WebRTC', 'Trying to start recording');
+    mediaRecorder = new RecordRTC(allAudioStreams, {
+      type: 'audio',
+      mimeType: codec
+    });
+    mediaRecorder.startRecording();
+    recording = true;
+    logValues('SUCCESS WebRTC', 'Starting recording');
+    setTimeout(startRecording, recordTimer);
+  } else {
+    setTimeout(startRecording, 1000);
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder !== null) {
+    mediaRecorder.stopRecording(() => {
+      recording = false;
+      const blob = mediaRecorder.getBlob();
+      const blobFile = new File([blob], (roomUUID + '.webm'), {
+        type: 'application/octet-stream',
+      });
+      console.log(blobFile);
+
+      const downloadAncher = document.createElement("a");
+      downloadAncher.style.display = "none";
+
+      downloadAncher.href = URL.createObjectURL(blobFile);
+      downloadAncher.download = roomUUID + '.webm';
+      downloadAncher.click();
+
+      startRecording();
+    });
+  }
+}
 
 window.addEventListener('beforeunload', () => {
   connectedUsers = [];

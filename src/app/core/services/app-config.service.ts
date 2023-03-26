@@ -4,8 +4,11 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 export interface AppConfig {
-  iceCredential?: string;
-  iceUsername?: string;
+  iceServers: {
+    urls: string;
+    username?: string;
+    credential?: string;
+  }[];
 }
 
 @Injectable({
@@ -25,7 +28,9 @@ export class AppConfigService {
       }),
       tap(() => this.loadedSubject.next(true)),
       catchError((err) => {
-        this.appConfig = {};
+        this.appConfig = {
+          iceServers: [],
+        };
         console.error('Could not load configuration', { err });
         return throwError(err);
       }),

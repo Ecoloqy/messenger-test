@@ -1,22 +1,21 @@
 <script type="module" src="assets/scripts/client.mjs"></script>
 
-<div id="call-page" [style.display]="'flex'">
+<div id="page-background"></div>
+<div id="call-page">
   <div id="local-video-container">
     <video id="local-video" autoplay playsinline></video>
   </div>
   <div
     id="remote-video-container"
     *ngIf="getUsersFn() | filterBySrcObject as users"
-    [style.--grid-rows]="getGridRows(users.length)"
-    [style.--grid-cols]="getGridCols(users.length)"
+    [style.--grid-cols]="users | colsByUsers"
   >
-    <ng-container *ngFor="let user of users">
-      <video
-        class="remote-video"
-        [srcObject]="user.srcObject"
-        autoplay
-        playsinline
-      ></video>
-    </ng-container>
+    <video
+      *ngFor="let user of users"
+      [srcObject]="user.srcObject"
+      class="remote-video"
+      autoplay
+      playsinline
+    ></video>
   </div>
 </div>

@@ -16,43 +16,11 @@ export class VideoComponent implements OnInit {
   constructor(private appConfigService: AppConfigService) {}
 
   ngOnInit(): void {
+    const iceServers = this.appConfigService.appConfig.iceServers;
+
     script.setRoomUUID('roomId');
     script.setUserUUID(this.userUUID);
-    script.setIceServers([
-      {
-        urls: 'stun:relay.metered.ca:80',
-      },
-      {
-        urls: 'turn:relay.metered.ca:80',
-        username: 'df36a504987e1cfd985e6a30',
-        credential: '0ga+k5C5f7DLK/ED',
-      },
-      {
-        urls: 'turn:relay.metered.ca:443',
-        username: 'df36a504987e1cfd985e6a30',
-        credential: '0ga+k5C5f7DLK/ED',
-      },
-      {
-        urls: 'turn:relay.metered.ca:443?transport=tcp',
-        username: 'df36a504987e1cfd985e6a30',
-        credential: '0ga+k5C5f7DLK/ED',
-      },
-    ]);
+    script.setIceServers(iceServers);
     script.setConnection('ws://51.77.58.218:8090');
-    // script.setConnection('ws://127.0.0.1:9090');
-  }
-
-  public getGridCols(connectedUsers: number): number {
-    if (connectedUsers > 1) {
-      return 2;
-    }
-    return 1;
-  }
-
-  public getGridRows(connectedUsers: number): number {
-    if (connectedUsers > 2) {
-      return 2;
-    }
-    return 1;
   }
 }

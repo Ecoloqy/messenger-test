@@ -31,8 +31,10 @@ export const getConnectedUsers = () => {
 
 export const setConnection = (address) => {
   connection = new WebSocket(address);
+
   connection.onopen = () => {
     send({ type: "login" });
+    logValues('SUCCESS WSS', 'Connected to WSS');
   };
 
   connection.onmessage = (message) => {
@@ -60,11 +62,11 @@ export const setConnection = (address) => {
         break;
       }
       case "mute": {
-        handleMute(true, data.name);
+        handleMute(true, data.userUUID);
         break;
       }
       case "unMute": {
-        handleMute(false, data.name);
+        handleMute(false, data.userUUID);
         break;
       }
       default:
@@ -72,10 +74,13 @@ export const setConnection = (address) => {
     }
   };
 
-  connection.onerror = (err, ev) => {
-    console.log(err);
-    console.log(ev);
+  connection.onerror = (err) => {
+    logValues('ERROR WSS', 'Error with connection to WSS: ' + err);
   };
+}
+
+const logValues = (status, log) => {
+  console.log(status, userUUID, roomUUID, log, getBrowserName(navigator.userAgent));
 }
 
 const send = (message) => {
@@ -97,6 +102,7 @@ window.addEventListener('beforeunload', () => {
     roomUUID: roomUUID,
     userUUID: userUUID
   });
+  logValues('SUCCESS WSS', 'Disconnected from WSS');
 });
 
 window.addEventListener('close', () =>  {
@@ -106,14 +112,15 @@ window.addEventListener('close', () =>  {
     roomUUID: roomUUID,
     userUUID: userUUID
   });
+  logValues('SUCCESS WSS', 'Disconnected from WSS');
 });
 
 const handleMute = (status, userUUID) => {
-  connectedUsers.forEach((cu) => {
-    if (cu.uuid !== userUUID) {
-      cu.srcObject.muted = status;
-    }
-  })
+  const foundUser = connectedUsers.find((user) => user.uuid === userUUID);
+  if (foundUser) {
+    foundUser.srcObject.muted = status;
+    logValues('SUCCESS WSS', userUUID + (status ? ' is ' : ' is not ') +  'muted');
+  }
 }
 
 const createVideoPeer = (callToUserUUID) => {
@@ -127,23 +134,28 @@ const createVideoPeer = (callToUserUUID) => {
       srcObject: null,
     };
     connectedUsers.push(user);
+    logValues('CONNECTION WSS', 'Stream user: ' + callToUserUUID + '. Added connection to pool');
   }
 
   if (localVideoStream) {
     user.videoConnection = new RTCPeerConnection(configuration);
+    logValues('SUCCESS WSS', 'Connection configuration read');
 
     user.videoConnection.addStream(localVideoStream);
+    logValues('CONNECTION WSS', 'Local video streamed');
 
     user.videoConnection.onaddstream = (event) => {
+      logValues('CONNECTION WSS', 'Stream user: ' + user.uuid + '. Video stream added');
       user.srcObject = event.stream;
     };
 
     user.videoConnection.onconnectionstatechange = (state) => {
-      console.log(state.target);
+      logValues('CONNECTION WSS', 'Stream user: ' + user.uuid + '. Connection state changed: ' + state.target?.connectionState);
     }
 
     user.videoConnection.onicecandidate = (event) => {
       if (event.candidate) {
+        logValues('CONNECTION WSS', 'Stream user: ' + user.uuid + '. Ice candidate sent');
         send({
           type: "candidateVideo",
           userUUID: userUUID,
@@ -158,6 +170,7 @@ const createVideoPeer = (callToUserUUID) => {
 
 const handleLogin = (success, otherUsersToCall) => {
   if (!success) {
+    logValues('ERROR WSS', 'User already connected');
     alert("Ooops...try a different username");
   } else {
     connectedUsers = otherUsersToCall.map((userUUID) => ({
@@ -167,8 +180,9 @@ const handleLogin = (success, otherUsersToCall) => {
     }));
 
     getUserStream({ audio: true, video: { width: 320, height: 240 } }, otherUsersToCall).catch((videoError) => {
+      logValues('ERROR WebRTC', 'Video cannot be obtained: ' + getWebRTCError(videoError));
       getUserStream({ audio: true, video: false }, otherUsersToCall).catch((audioError) => {
-        alert("Error when obtaining video and audio");
+        logValues('ERROR WebRTC', 'Audio cannot be obtained: ' + getWebRTCError(audioError));
       })
     });
   }
@@ -180,6 +194,7 @@ const getUserStream = (params, otherUsersToCall) => {
     localVideo.srcObject = stream;
     localVideo.muted = true;
     localVideoStream = stream;
+    logValues('SUCCESS WebRTC', 'Video or audio obtained');
 
     const allConnectedUsers = connectedUsers.map((cu) => cu.uuid);
     const usersToCall = otherUsersToCall.filter((user) => allConnectedUsers.includes(user));
@@ -199,9 +214,10 @@ const callTo = (callToUserUUID) => {
   createVideoPeer(callToUserUUID);
 
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
-  if (user?.videoConnection) {
+  if (!!user?.videoConnection) {
     user.videoConnection.createOffer({ iceRestart: true }).then((offer) => {
-      user.videoConnection.setLocalDescription(offer).then((r) => {
+      user.videoConnection.setLocalDescription(offer).then(() => {
+        logValues('SUCCESS WSS', 'Stream user: ' + user.uuid + '. Sending offer');
         send({
           type: "offerVideo",
           offer: offer,
@@ -211,7 +227,7 @@ const callTo = (callToUserUUID) => {
         });
       })
     }).catch(() => {
-      alert("Error when creating an offer");
+      logValues('ERROR WSS', 'Stream user: ' + user.uuid + ' . Error when creating an offer');
     });
   }
 }
@@ -221,9 +237,11 @@ const handleOfferVideo = (offer, callToUserUUID) => {
 
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
   if (!!user?.videoConnection) {
+    logValues('SUCCESS WSS', 'Stream user: ' + user.uuid + '. Obtained offer');
     user.videoConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
       user.videoConnection.createAnswer().then((answer) => {
         user.videoConnection.setLocalDescription(answer).then(() => {
+          logValues('SUCCESS WSS', 'Stream user: ' + user.uuid + '. Sending answer');
           send({
             type: "answerVideo",
             answer: answer,
@@ -233,20 +251,80 @@ const handleOfferVideo = (offer, callToUserUUID) => {
           });
         })
       }).catch(() => {
-        alert("Error when answering a video");
+        logValues('ERROR WSS', 'Stream user: ' + user.uuid + ' . Error when creating a answer');
       });
+    }).catch(() => {
+      logValues('ERROR WSS', 'Stream user: ' + user.uuid + ' . Error when obtaining an offer');
     });
   }
 };
 
 const handleAnswerVideo = (answer, callToUserUUID) => {
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
-  user.videoConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  user.videoConnection.setRemoteDescription(new RTCSessionDescription(answer)).then(() => {
+    logValues('SUCCESS WSS', 'Stream user: ' + user.uuid + '. Obtained answer');
+  }).catch(() => {
+    logValues('ERROR WSS', 'Stream user: ' + user.uuid + ' . Error when obtaining a answer');
+  })
 };
 
 const handleCandidateVideo = (candidate, callToUserUUID) => {
   const user = connectedUsers.find((cu) => cu.uuid === callToUserUUID);
   if (user?.videoConnection) {
-    user.videoConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    user.videoConnection.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
+      logValues('SUCCESS WSS', 'Stream user: ' + user.uuid + '. Obtained candidate');
+    }).catch(() => {
+      logValues('ERROR WSS', 'Stream user: ' + user.uuid + ' . Error when obtaining a candidate');
+    });
   }
 };
+
+const getBrowserName = (userAgent) => {
+  // The order matters here, and this may report false positives for unlisted browsers.
+
+  if (userAgent.includes('Firefox')) {
+    // "Mozilla/5.0 (X11; Linux i686; rv:104.0) Gecko/20100101 Firefox/104.0"
+    return 'Mozilla Firefox';
+  } else if (userAgent.includes('SamsungBrowser')) {
+    // "Mozilla/5.0 (Linux; Android 9; SAMSUNG SM-G955F Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/9.4 Chrome/67.0.3396.87 Mobile Safari/537.36"
+    return 'Samsung Internet';
+  } else if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+    // "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36 OPR/90.0.4480.54"
+    return 'Opera';
+  } else if (userAgent.includes('Trident')) {
+    // "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729)"
+    return 'Microsoft Internet Explorer';
+  } else if (userAgent.includes('Edge')) {
+    // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
+    return 'Microsoft Edge (Legacy)';
+  } else if (userAgent.includes('Edg')) {
+    // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36 Edg/104.0.1293.70"
+    return 'Microsoft Edge (Chromium)';
+  } else if (userAgent.includes('Chrome')) {
+    // "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+    return 'Google Chrome or Chromium';
+  } else if (userAgent.includes('Safari')) {
+    // "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1"
+    return 'Apple Safari';
+  } else {
+    return 'unknown';
+  }
+}
+
+const getWebRTCError = (error) => {
+  let message = 'Cannot obtain UserMedia device video. Another error occurred';
+
+  if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+    message = 'Cannot obtain UserMedia device video. Required track is missing';
+  } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+    message = 'Cannot obtain UserMedia device video. Webcam or mic are already in use';
+  } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+    message = 'Cannot obtain UserMedia device video. Constraints can not be satisfied by available devices';
+  } else if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+    message = 'Cannot obtain UserMedia device video. Permission Denied';
+  } else if (error.name === "TypeError" || error.name === "TypeError") {
+    message = 'Cannot obtain UserMedia device video. Both audio and video are FALSE';
+  }
+
+  return message + ': ' + JSON.stringify(error.name) + ' - ' + JSON.stringify(error.message);
+}

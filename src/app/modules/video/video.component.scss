@@ -1,8 +1,24 @@
-#call-page {
+
+#page-background {
   background-color: #505050;
   position: fixed;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#call-page {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+
+  @media (max-width: 700px) {
+    position: absolute;
+    padding: 0;
+  }
 
   #local-video-container {
     position: fixed;
@@ -18,18 +34,28 @@
       width: 15vw;
     }
 
+    @media (max-width: 700px) {
+      left: 10px;
+      bottom: 10px;
+
+      #local-video {
+        width: 50vw;
+      }
+    }
   }
 
   #remote-video-container {
     --grid-cols: 1;
-    --grid-rows: 1;
 
     width: 100%;
     height: 100%;
-    display: inline-grid;
+    display: grid;
     justify-items: center;
     grid-template-columns: repeat(var(--grid-cols), 1fr);
-    grid-template-rows: repeat(var(--grid-rows), 1fr);
+
+    @media (max-width: 700px) {
+      grid-template-columns: repeat(1, 1fr);
+    }
 
     .remote-video {
       height: 100%;
@@ -37,5 +63,4 @@
       object-fit: contain;
     }
   }
-
 }

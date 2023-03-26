@@ -9,9 +9,14 @@ const routes: Routes = [
       import('./modules/home/home.module').then((m) => m.HomeModule),
   },
   {
-    path: 'video',
+    path: 'adviser',
     loadChildren: () =>
-      import('./modules/video/video.module').then((m) => m.VideoModule),
+      import('./modules/adviser/adviser.module').then((m) => m.AdviserModule),
+  },
+  {
+    path: 'client',
+    loadChildren: () =>
+      import('./modules/client/client.module').then((m) => m.ClientModule),
   },
   {
     path: '**',

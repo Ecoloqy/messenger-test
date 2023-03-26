@@ -1,0 +1,55 @@
+<script type="module" src="assets/scripts/client.mjs"></script>
+
+<div id="page-background"></div>
+<div id="call-page">
+  <app-session-details
+    id="session-details"
+    [sessionDetails]="'Nazwa użytkownika'"
+  ></app-session-details>
+  <app-session-timer
+    id="session-timer"
+    [date]="dateTodayMockedBlaBlaBla"
+  ></app-session-timer>
+
+  <div id="buttons-panel">
+    <div id="buttons-panel-expandable">
+      <button id="buttons-panel-content" class="cursor-pointer" (click)="close()">
+        <div>Zakończ rozmowę</div>
+      </button>
+      <button disabled>
+        <svg-icon
+          [svgStyle]="{ width: '40px', height: '40px' }"
+          [src]="'assets/icons/view_red-phone.svg'"
+        ></svg-icon>
+      </button>
+    </div>
+
+    <button class="cursor-pointer" (click)="mute()">
+      <svg-icon
+        [src]="
+          muted
+            ? 'assets/icons/view_microphone_disabled.svg'
+            : 'assets/icons/view_microphone_enabled.svg'
+        "
+        [svgStyle]="{ width: '40px', height: '40px' }"
+      ></svg-icon>
+    </button>
+  </div>
+
+  <div id="local-video-container">
+    <video id="local-video" autoplay playsinline></video>
+  </div>
+  <div
+    id="remote-video-container"
+    *ngIf="getUsersFn() | filterBySrcObject as users"
+    [style.--grid-cols]="users | colsByUsers"
+  >
+    <video
+      *ngFor="let user of users"
+      [srcObject]="user.srcObject"
+      class="remote-video"
+      autoplay
+      playsinline
+    ></video>
+  </div>
+</div>

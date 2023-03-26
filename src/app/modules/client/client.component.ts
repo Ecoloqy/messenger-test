@@ -5,17 +5,17 @@ import { AppConfigService } from '@core/services/app-config.service';
 const script = require('@assets/scripts/client.mjs');
 
 @Component({
-  selector: 'app-video',
-  templateUrl: './video.component.html',
-  styleUrls: ['./video.component.scss'],
+  selector: 'app-client',
+  templateUrl: './client.component.html',
+  styleUrls: ['./client.component.scss'],
 })
-export class VideoComponent implements OnInit {
+export class ClientComponent implements OnInit {
   getUsersFn = script.getConnectedUsers;
   userUUID = uuidv4();
 
   constructor(private appConfigService: AppConfigService) {}
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     const iceServers = this.appConfigService.appConfig.iceServers;
 
     script.setRoomUUID('roomId');

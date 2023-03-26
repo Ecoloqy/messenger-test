@@ -61,10 +61,6 @@ export const setConnection = (address) => {
         handleCandidateVideo(data.candidate, data.userUUID);
         break;
       }
-      case "mute": {
-        handleMute(data.status, data.userUUID);
-        break;
-      }
       default:
         break;
     }
@@ -73,6 +69,15 @@ export const setConnection = (address) => {
   connection.onerror = (err) => {
     logValues('ERROR WSS', 'Error with connection to WSS: ' + err);
   };
+}
+
+export const mute = (status) => {
+  send({
+    type: "mute",
+    status,
+    roomUUID: roomUUID,
+    userUUID: userUUID
+  });
 }
 
 const logValues = (status, log) => {
@@ -110,14 +115,6 @@ window.addEventListener('close', () =>  {
   });
   logValues('SUCCESS WSS', 'Disconnected from WSS');
 });
-
-const handleMute = (status, userUUID) => {
-  const foundUser = connectedUsers.find((user) => user.uuid === userUUID);
-  if (foundUser) {
-    foundUser.srcObject.muted = status;
-    logValues('SUCCESS WSS', userUUID + (status ? ' is ' : ' is not ') +  'muted');
-  }
-}
 
 const createVideoPeer = (callToUserUUID) => {
   const configuration = { "iceServers": iceServers };

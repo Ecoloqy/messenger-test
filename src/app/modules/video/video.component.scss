@@ -1,33 +1,41 @@
-#callPage {
+#call-page {
   background-color: #505050;
-  height: 100vh;
-
-#local-video-container {
   position: fixed;
-  bottom: 5vh;
-  left: 5vw;
-  z-index: 99;
-  width: 15vw;
-  overflow: hidden;
-
-#localVideo {
-  z-index: 99;
-  width: 15vw;
-  object-fit: cover;
-}
-
-}
-
-#remote-video-container {
-  z-index: -1;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-
-#remoteVideo, #remoteVideo2 {
-  z-index: 0;
   height: 100vh;
-}
-}
+  width: 100vw;
+
+  #local-video-container {
+    position: fixed;
+    bottom: 80px;
+    left: 80px;
+    z-index: 99;
+    width: 400px;
+    height: auto;
+    object-fit: cover;
+    overflow: hidden;
+
+    #local-video {
+      width: 15vw;
+    }
+
+  }
+
+  #remote-video-container {
+    --grid-cols: 1;
+    --grid-rows: 1;
+
+    width: 100%;
+    height: 100%;
+    display: inline-grid;
+    justify-items: center;
+    grid-template-columns: repeat(var(--grid-cols), 1fr);
+    grid-template-rows: repeat(var(--grid-rows), 1fr);
+
+    .remote-video {
+      height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+  }
+
 }

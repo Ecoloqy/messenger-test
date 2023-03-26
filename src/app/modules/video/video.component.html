@@ -1,21 +1,22 @@
 <script type="module" src="assets/scripts/client.mjs"></script>
 
-<div id="callPage" [style.display]="'flex'">
-  <div
-    [style.background-color]="'red'"
-    [style.display]="'flex'"
-    [style.flex-direction]="'column'"
-  >
+<div id="call-page" [style.display]="'flex'">
+  <div id="local-video-container">
     <video id="local-video" autoplay playsinline></video>
-    {{ userUUID }}
   </div>
   <div
-    [style.background-color]="'blue'"
-    [style.display]="'flex'"
-    [style.flex-direction]="'column'"
-    *ngFor="let user of getUsersFn()"
+    id="remote-video-container"
+    *ngIf="getUsersFn() | filterBySrcObject as users"
+    [style.--grid-rows]="getGridRows(users.length)"
+    [style.--grid-cols]="getGridCols(users.length)"
   >
-    <video [srcObject]="user.srcObject" autoplay playsinline></video>
-    {{ user.uuid }}
+    <ng-container *ngFor="let user of users">
+      <video
+        class="remote-video"
+        [srcObject]="user.srcObject"
+        autoplay
+        playsinline
+      ></video>
+    </ng-container>
   </div>
 </div>

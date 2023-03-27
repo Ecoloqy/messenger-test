@@ -23,4 +23,8 @@ export class ClientComponent implements OnInit {
     script.setIceServers(iceServers);
     script.setConnection('ws://51.77.58.218:8090');
   }
+
+  public close(): void {
+    window.close();
+  }
 }

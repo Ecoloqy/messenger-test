@@ -2,6 +2,20 @@
 
 <div id="page-background"></div>
 <div id="call-page">
+  <div id="buttons-panel">
+    <div id="buttons-panel-expandable">
+      <button id="buttons-panel-content" class="cursor-pointer" (click)="close()">
+        <div>Zakończ rozmowę</div>
+      </button>
+      <button disabled>
+        <svg-icon
+          [svgStyle]="{ width: '40px', height: '40px' }"
+          [src]="'assets/icons/view_red-phone.svg'"
+        ></svg-icon>
+      </button>
+    </div>
+  </div>
+
   <div id="local-video-container">
     <video id="local-video" autoplay playsinline></video>
   </div>

@@ -14,8 +14,6 @@ export class AdviserComponent implements OnInit {
   userUUID = uuidv4();
   muted = false;
 
-  dateTodayMockedBlaBlaBla = new Date(Date.now()).toDateString();
-
   constructor(private appConfigService: AppConfigService) {}
 
   public ngOnInit(): void {

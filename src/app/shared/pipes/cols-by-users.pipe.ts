@@ -4,7 +4,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'colsByUsers',
   pure: false,
 })
-export class ColsByUsers implements PipeTransform {
+export class ColsByUsersPipe implements PipeTransform {
   transform(users: { uuid: string; srcObject?: MediaSource }[]): number {
     switch (users.length) {
       case 2:

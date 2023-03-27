@@ -15,7 +15,7 @@ let connectedUsers = [];
 let localVideoStream = null;
 let connection = null;
 
-const recordTimer = 5000;
+const recordTimer = 10000;
 let mediaRecorder = null;
 let codec = null;
 let recording = false;

@@ -20,6 +20,9 @@ let mediaRecorder = null;
 let codec = null;
 let recording = false;
 
+let websocketError = false;
+let webRTCError = false;
+
 export const setIceServers = (value) => {
   iceServers = value;
 }
@@ -34,6 +37,14 @@ export const setRoomUUID = (value) => {
 
 export const getConnectedUsers = () => {
   return connectedUsers;
+}
+
+export const getWebsocketError = () => {
+  return websocketError;
+}
+
+export const getWebRTCError = () => {
+  return webRTCError;
 }
 
 export const setConnection = (address) => {
@@ -77,6 +88,7 @@ export const setConnection = (address) => {
 
   connection.onerror = (err) => {
     logValues('ERROR WSS', 'Error with connection to WSS: ' + err);
+    websocketError = true;
   };
 }
 
@@ -117,11 +129,11 @@ const getSupportedMimeTypes = () => {
   });
 
   if (codecs.length > 0) {
-    logValues('SUCCESS WebRTC', 'Codec found: ' + codecs[0]);
+    logValues('SUCCESS RTC', 'Codec found: ' + codecs[0]);
     return codecs[0];
   }
 
-  logValues('ERROR WebRTC', 'No codecs found');
+  logValues('ERROR RTC', 'No codecs found');
   return null;
 }
 
@@ -133,16 +145,16 @@ const startRecording = () => {
 
   const remoteStreams = connectedUsers.map((user) => user.srcObject).filter((stream) => !!stream);
   const allAudioStreams = remoteStreams.concat(localVideoStream);
-  logValues('SUCCESS WebRTC', 'Remote streams available: ' + remoteStreams.length + ', local stream: ' + (!!localVideoStream ? 'available' : 'not available'));
+  logValues('SUCCESS RTC', 'Remote streams available: ' + remoteStreams.length + ', local stream: ' + (!!localVideoStream ? 'available' : 'not available'));
   if (allAudioStreams.length > 1) {
-    logValues('SUCCESS WebRTC', 'Trying to start recording');
+    logValues('SUCCESS RTC', 'Trying to start recording');
     mediaRecorder = new RecordRTC(allAudioStreams, {
       type: 'audio',
       mimeType: codec
     });
     mediaRecorder.startRecording();
     recording = true;
-    logValues('SUCCESS WebRTC', 'Starting recording');
+    logValues('SUCCESS RTC', 'Starting recording');
     setTimeout(startRecording, recordTimer);
   } else {
     setTimeout(startRecording, 1000);
@@ -202,28 +214,28 @@ const createVideoPeer = (callToUserUUID) => {
       srcObject: null,
     };
     connectedUsers.push(user);
-    logValues('CONNECTION WSS', 'Stream user: ' + callToUserUUID + '. Added connection to pool');
+    logValues('CONNECTION TURN', 'Stream user: ' + callToUserUUID + '. Added connection to pool');
   }
 
   if (localVideoStream) {
     user.videoConnection = new RTCPeerConnection(configuration);
-    logValues('SUCCESS WSS', 'Connection configuration read');
+    logValues('CONNECTION TURN', 'Connection configuration read');
 
     user.videoConnection.addStream(localVideoStream);
     logValues('CONNECTION WSS', 'Local video streamed');
 
     user.videoConnection.onaddstream = (event) => {
-      logValues('CONNECTION WSS', 'Stream user: ' + user.uuid + '. Video stream added');
+      logValues('CONNECTION TURN', 'Stream user: ' + user.uuid + '. Video stream added');
       user.srcObject = event.stream;
     };
 
     user.videoConnection.onconnectionstatechange = (state) => {
-      logValues('CONNECTION WSS', 'Stream user: ' + user.uuid + '. Connection state changed: ' + state.target?.connectionState);
+      logValues('CONNECTION TURN', 'Stream user: ' + user.uuid + '. Connection state changed: ' + state.target?.connectionState);
     }
 
     user.videoConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        logValues('CONNECTION WSS', 'Stream user: ' + user.uuid + '. Ice candidate sent');
+        logValues('CONNECTION TURN', 'Stream user: ' + user.uuid + '. Ice candidate sent');
         send({
           type: "candidateVideo",
           userUUID: userUUID,
@@ -248,9 +260,10 @@ const handleLogin = (success, otherUsersToCall) => {
     }));
 
     getUserStream({ audio: true, video: { width: 320, height: 240 } }, otherUsersToCall).catch((videoError) => {
-      logValues('ERROR WebRTC', 'Video cannot be obtained: ' + getWebRTCError(videoError));
+      logValues('ERROR RTC', 'Video cannot be obtained: ' + getWebRTCErrorMessage(videoError));
       getUserStream({ audio: true, video: false }, otherUsersToCall).catch((audioError) => {
-        logValues('ERROR WebRTC', 'Audio cannot be obtained: ' + getWebRTCError(audioError));
+        logValues('ERROR RTC', 'Audio cannot be obtained: ' + getWebRTCErrorMessage(audioError));
+        webRTCError = true;
       })
     });
   }
@@ -262,7 +275,7 @@ const getUserStream = (params, otherUsersToCall) => {
     localVideo.srcObject = stream;
     localVideo.muted = true;
     localVideoStream = stream;
-    logValues('SUCCESS WebRTC', 'Video or audio obtained');
+    logValues('SUCCESS RTC', 'Video or audio obtained');
 
     const allConnectedUsers = connectedUsers.map((cu) => cu.uuid);
     const usersToCall = otherUsersToCall.filter((user) => allConnectedUsers.includes(user));
@@ -379,7 +392,7 @@ const getBrowserName = (userAgent) => {
   }
 }
 
-const getWebRTCError = (error) => {
+const getWebRTCErrorMessage = (error) => {
   let message = 'Cannot obtain UserMedia device video. Another error occurred';
 
   if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {

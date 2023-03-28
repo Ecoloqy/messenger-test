@@ -1,5 +1,5 @@
 {
-  "wssServer": "ws://messenger-wss.szczepaniak.it",
+  "wssServer": "wss://messenger-wss.szczepaniak.it",
   "iceServers": [
     {
       "urls": "stun:relay.metered.ca:80"

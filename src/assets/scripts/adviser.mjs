@@ -17,8 +17,8 @@ let connectedUsers = [];
 let localVideoStream = null;
 let connection = null;
 
-const recordTimer = 10000;
 const downloadRecord = false;
+const recordTimer = 10000;
 
 let mediaRecorder = null;
 let codec = null;
@@ -49,10 +49,6 @@ export const getWebsocketError = () => {
 
 export const getWebRTCError = () => {
   return webRTCError;
-}
-
-export const windowClose = () => {
-  window.close();
 }
 
 export const setConnection = (address) => {

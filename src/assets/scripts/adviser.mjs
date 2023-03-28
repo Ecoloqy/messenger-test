@@ -16,6 +16,8 @@ let localVideoStream = null;
 let connection = null;
 
 const recordTimer = 10000;
+const downloadRecord = false;
+
 let mediaRecorder = null;
 let codec = null;
 let recording = false;
@@ -166,17 +168,15 @@ const stopRecording = () => {
     mediaRecorder.stopRecording(() => {
       recording = false;
       const blob = mediaRecorder.getBlob();
-      const blobFile = new File([blob], (roomUUID + '.webm'), {
-        type: 'application/octet-stream',
-      });
-      console.log(blobFile);
 
-      const downloadAncher = document.createElement("a");
-      downloadAncher.style.display = "none";
+      if (downloadRecord) {
+        const anchor = document.createElement("a");
+        anchor.style.display = "none";
 
-      downloadAncher.href = URL.createObjectURL(blobFile);
-      downloadAncher.download = roomUUID + '.webm';
-      downloadAncher.click();
+        anchor.href = URL.createObjectURL(blob);
+        anchor.download = roomUUID + '.webm';
+        anchor.click();
+      }
 
       startRecording();
     });

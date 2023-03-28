@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 export interface AppConfig {
+  wssServer: string;
   iceServers: {
     urls: string;
     username?: string;
@@ -29,6 +30,7 @@ export class AppConfigService {
       tap(() => this.loadedSubject.next(true)),
       catchError((err) => {
         this.appConfig = {
+          wssServer: '',
           iceServers: [],
         };
         console.error('Could not load configuration', { err });

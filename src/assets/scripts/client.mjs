@@ -40,6 +40,10 @@ export const getWebRTCError = () => {
   return webRTCError;
 }
 
+export const windowClose = () => {
+  window.close();
+}
+
 export const setConnection = (address) => {
   connection = new WebSocket(address);
 

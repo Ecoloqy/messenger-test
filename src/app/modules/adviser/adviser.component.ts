@@ -18,15 +18,16 @@ export class AdviserComponent implements OnInit {
 
   public ngOnInit(): void {
     const iceServers = this.appConfigService.appConfig.iceServers;
+    const wssServer = this.appConfigService.appConfig.wssServer;
 
     script.setRoomUUID('roomId');
     script.setUserUUID(this.userUUID);
     script.setIceServers(iceServers);
-    script.setConnection('ws://51.77.58.218:8090');
+    script.setConnection(wssServer);
   }
 
   public close(): void {
-    window.close();
+    script.windowClose();
   }
 
   public mute(): void {

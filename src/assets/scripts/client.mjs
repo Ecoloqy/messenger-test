@@ -86,7 +86,7 @@ export const setConnection = (address) => {
   };
 
   connection.onerror = (err) => {
-    logValues('ERROR WSS', 'Error with connection to WSS: ' + err);
+    logValues('ERROR WSS', 'Error with connection to WSS: ' + JSON.stringify(err));
     websocketError = true;
   };
 }
